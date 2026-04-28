@@ -2,23 +2,17 @@ from PIL import Image
 import cv2
 import numpy as np
 
-INPUT_IMAGE = "avatar_grid.png"
-OUTPUT_VIDEO = "avatar_loop_slow.mp4"
+INPUT_IMAGE = "avatar_grid_12.png"
+OUTPUT_VIDEO = "avatar_loop_12_frames.mp4"
 
-COLS = 3
-ROWS = 2
+COLS = 6
+ROWS = 3
 
-FPS = 4
-LOOPS = 6
+FPS = 6
+LOOPS = 8
 
-HOLD_FRAMES = {
-    0: 8,   # neutral smirk
-    1: 2,   # blink
-    2: 5,   # mouth slightly open
-    3: 5,   # eyebrow raised
-    4: 5,   # speaking mouth
-    5: 8,   # back to neutral
-}
+# Higher number = frame stays longer
+HOLD_FRAMES = 3
 
 img = Image.open(INPUT_IMAGE).convert("RGB")
 
@@ -34,14 +28,15 @@ for row in range(ROWS):
         top = row * frame_h
         right = left + frame_w
         bottom = top + frame_h
+
         frame = img.crop((left, top, right, bottom))
         frames.append(np.array(frame))
 
 video_frames = []
 
 for _ in range(LOOPS):
-    for i, frame in enumerate(frames):
-        video_frames.extend([frame] * HOLD_FRAMES[i])
+    for frame in frames:
+        video_frames.extend([frame] * HOLD_FRAMES)
 
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 out = cv2.VideoWriter(
