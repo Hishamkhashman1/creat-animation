@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 INPUT_IMAGE = "avatar_grid_12.png"
-OUTPUT_VIDEO = "avatar_loop_fixed.mp4"
+OUTPUT_VIDEO = "avatar_loop_clean.mp4"
 
 COLS = 6
 ROWS = 3
@@ -12,11 +12,14 @@ FPS = 6
 LOOPS = 8
 HOLD_FRAMES = 4
 
-# choose only clean frames, zero-indexed:
-# row 0: 0 1 2 3 4 5
-# row 1: 6 7 8 9 10 11
-# row 2: 12 13 14 15 16 17
-USE_FRAMES = [0, 1, 2, 3, 4, 5, 8, 10, 11, 14, 15, 16]
+# use all 18 grid cells
+USE_FRAMES = list(range(18))
+
+# inner crop margins to remove neighboring frame bleed
+MARGIN_LEFT = 45
+MARGIN_RIGHT = 25
+MARGIN_TOP = 5
+MARGIN_BOTTOM = 5
 
 img = Image.open(INPUT_IMAGE).convert("RGB")
 
@@ -30,18 +33,15 @@ for idx in USE_FRAMES:
     row = idx // COLS
     col = idx % COLS
 
-    left = col * frame_w
-    top = row * frame_h
-    right = left + frame_w
-    bottom = top + frame_h
+    left = col * frame_w + MARGIN_LEFT
+    top = row * frame_h + MARGIN_TOP
+    right = (col + 1) * frame_w - MARGIN_RIGHT
+    bottom = (row + 1) * frame_h - MARGIN_BOTTOM
 
     frame = img.crop((left, top, right, bottom))
 
-    # remove tiny edge artifacts
-    frame = frame.crop((8, 8, frame_w - 8, frame_h - 8))
-
-    # resize all frames back to same output size
-    frame = frame.resize((frame_w, frame_h), Image.LANCZOS)
+    # resize to consistent video size
+    frame = frame.resize((720, 720), Image.LANCZOS)
 
     frames.append(np.array(frame))
 
@@ -56,7 +56,7 @@ out = cv2.VideoWriter(
     OUTPUT_VIDEO,
     fourcc,
     FPS,
-    (frame_w, frame_h)
+    (720, 720)
 )
 
 for frame in video_frames:
